@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Still</string>
+
+    <string name="widget_small_label">Still · small</string>
+    <string name="widget_small_description">Best break and pickups, in a compact square.</string>
+    <string name="widget_wide_label">Still · wide</string>
+    <string name="widget_wide_description">Best break, pickups and last update in one wide strip.</string>
+    <string name="widget_mini_label">Still · mini</string>
+    <string name="widget_mini_description">Best break and pickups in a small 2×1 tile.</string>
+</resources>

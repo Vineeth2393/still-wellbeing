@@ -1,0 +1,11 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!--
+      Minimal bridge theme for the window background before Compose draws its
+      first frame. All real theming (colors, typography) lives in
+      ui/theme/Theme.kt as Compose code, not here.
+    -->
+    <style name="Theme.Still" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/still_window_background</item>
+        <item name="android:statusBarColor" tools:targetApi="21">@color/still_window_background</item>
+    </style>
+</resources>

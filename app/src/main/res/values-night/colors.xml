@@ -1,0 +1,10 @@
+<resources>
+    <!-- Matches the dark "paper" surface token in ui/theme/Color.kt. -->
+    <color name="still_window_background">#171B13</color>
+
+    <color name="widget_background">#171B13</color>
+    <color name="widget_ink">#E9ECE2</color>
+    <color name="widget_muted">#95A18D</color>
+    <color name="widget_accent">#93B681</color>
+    <color name="widget_line">#2B3226</color>
+</resources>

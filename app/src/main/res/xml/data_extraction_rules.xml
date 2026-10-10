@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ backup/transfer rules. Still keeps everything on-device by
+     design, so nothing here needs to travel through backup or device transfer. -->
+<data-extraction-rules>
+    <cloud-backup>
+    </cloud-backup>
+    <device-transfer>
+    </device-transfer>
+</data-extraction-rules>

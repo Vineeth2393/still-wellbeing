@@ -1,0 +1,13 @@
+<resources>
+    <!-- Matches the light "paper" surface token in ui/theme/Color.kt. -->
+    <color name="still_window_background">#FAF8F2</color>
+
+    <!-- Home-screen widget palette (Glance can't read Compose's runtime
+         theme, so these mirror ui/theme/Color.kt's light tokens directly;
+         the values-night variant mirrors the dark tokens). -->
+    <color name="widget_background">#FAF8F2</color>
+    <color name="widget_ink">#293C32</color>
+    <color name="widget_muted">#687268</color>
+    <color name="widget_accent">#456D55</color>
+    <color name="widget_line">#E7E7DC</color>
+</resources>

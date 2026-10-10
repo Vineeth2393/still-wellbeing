@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pre-Android-12 backup rules. Still keeps everything on-device by design,
+     so nothing here needs to travel through Android's backup service. -->
+<full-backup-content>
+</full-backup-content>
