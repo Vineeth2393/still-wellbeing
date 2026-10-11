@@ -12,6 +12,7 @@ import com.stillwellbeing.app.worker.WorkScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -39,14 +40,19 @@ class TodayViewModel(
     private val _uiState = MutableStateFlow<TodayUiState>(TodayUiState.Loading)
     val uiState: StateFlow<TodayUiState> = _uiState.asStateFlow()
 
+    /** True only while a pull-to-refresh the user asked for is running. */
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     init {
         refresh()
     }
 
     /** Re-checks permission and re-queries live usage data. Call on resume — the
      *  user may just have come back from granting usage access in Settings. */
-    fun refresh() {
+    fun refresh(userRequested: Boolean = false) {
         viewModelScope.launch {
+            if (userRequested) _isRefreshing.value = true
             try {
                 if (!trackingRepository.hasUsageAccess()) {
                     _uiState.value = TodayUiState.NeedsPermission
@@ -64,6 +70,13 @@ class TodayViewModel(
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to load today's summary", e)
                 _uiState.value = TodayUiState.Failed(e.message ?: e::class.java.simpleName)
+            } finally {
+                if (userRequested) {
+                    // The reload is near-instant; keep the spinner up just long
+                    // enough to read as "done" rather than a flicker.
+                    delay(500)
+                    _isRefreshing.value = false
+                }
             }
         }
     }

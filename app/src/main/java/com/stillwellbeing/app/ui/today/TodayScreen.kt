@@ -15,9 +15,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -49,6 +51,7 @@ import com.stillwellbeing.app.util.TimeFormat
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodayScreen(onManageGoals: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -71,12 +74,19 @@ fun TodayScreen(onManageGoals: () -> Unit, modifier: Modifier = Modifier) {
     }
 
     val uiState by viewModel.uiState.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
     when (val state = uiState) {
         TodayUiState.Loading -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator(color = LocalStillPalette.current.accent)
         }
         TodayUiState.NeedsPermission -> PermissionScreen(modifier)
-        is TodayUiState.Loaded -> TodayContent(state, onManageGoals, modifier)
+        is TodayUiState.Loaded -> PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = { viewModel.refresh(userRequested = true) },
+            modifier = modifier.fillMaxSize()
+        ) {
+            TodayContent(state, onManageGoals)
+        }
         is TodayUiState.Failed -> ErrorState(state.message, onRetry = viewModel::refresh, modifier = modifier)
     }
 }
