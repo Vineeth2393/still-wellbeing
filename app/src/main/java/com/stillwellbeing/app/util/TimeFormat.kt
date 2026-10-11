@@ -33,6 +33,11 @@ object TimeFormat {
     fun weekdayInitial(date: LocalDate): String =
         date.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale.getDefault())
 
+    private val dayLabelFormatter = DateTimeFormatter.ofPattern("EEE d MMM", Locale.getDefault())
+
+    /** A date -> "Tue 6 Oct", for chart readouts. */
+    fun dayLabel(date: LocalDate): String = dayLabelFormatter.format(date)
+
     private val monthDayFormatter = DateTimeFormatter.ofPattern("d MMMM", Locale.getDefault())
 
     /** A date -> "8 September", matching the record-card captions in the design. */

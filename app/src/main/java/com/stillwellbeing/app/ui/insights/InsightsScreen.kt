@@ -1,5 +1,6 @@
 package com.stillwellbeing.app.ui.insights
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -21,8 +23,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
@@ -70,6 +79,55 @@ fun InsightsScreen(modifier: Modifier = Modifier) {
         InsightsUiState.NeedsPermission -> PermissionScreen(modifier)
         is InsightsUiState.Loaded -> InsightsContent(state.last7Days, state.records, modifier)
         is InsightsUiState.Failed -> InsightsErrorState(state.message, onRetry = viewModel::refresh, modifier = modifier)
+    }
+}
+
+@Composable
+private fun ChartReadout(day: DayRecord) {
+    val palette = LocalStillPalette.current
+    Column {
+        Text(
+            TimeFormat.dayLabel(day.date) + if (day.isComplete) "" else " · partial day",
+            style = MaterialTheme.typography.bodySmall,
+            color = palette.muted
+        )
+        Spacer(Modifier.height(4.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(22.dp)) {
+            ReadoutStat("pickups", "${day.pickups}")
+            ReadoutStat("best break", if (day.longestBreakMs > 0) TimeFormat.duration(day.longestBreakMs) else "—")
+            ReadoutStat("screen time", if (day.totalScreenTimeMs > 0) TimeFormat.duration(day.totalScreenTimeMs) else "—")
+        }
+    }
+}
+
+@Composable
+private fun ReadoutStat(label: String, value: String) {
+    val palette = LocalStillPalette.current
+    Column {
+        Text(value, style = MaterialTheme.typography.titleLarge, color = palette.ink)
+        Text(label, style = MaterialTheme.typography.bodySmall, color = palette.muted)
+    }
+}
+
+/** A dashed swatch matching the chart's average line, plus what it means. */
+@Composable
+private fun AverageLegend(average: Double, color: Color) {
+    val palette = LocalStillPalette.current
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Canvas(Modifier.width(24.dp).height(2.dp)) {
+            drawLine(
+                color = color,
+                start = Offset(0f, size.height / 2),
+                end = Offset(size.width, size.height / 2),
+                strokeWidth = 1.5.dp.toPx(),
+                pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx()))
+            )
+        }
+        Text(
+            "7-day average · ${Math.round(average)} pickups",
+            style = MaterialTheme.typography.bodySmall,
+            color = palette.muted
+        )
     }
 }
 
@@ -159,23 +217,38 @@ private fun InsightsContent(
                 )
                 Spacer(Modifier.height(12.dp))
 
+                var selectedIndex by remember(last7Days) { mutableIntStateOf(last7Days.lastIndex) }
+                ChartReadout(last7Days[selectedIndex.coerceIn(0, last7Days.lastIndex)])
+                Spacer(Modifier.height(14.dp))
+
                 val maxPickups = last7Days.maxOf { it.pickups }.coerceAtLeast(1)
+                val averagePickups = last7Days.map { it.pickups }.average()
                 BarChart(
                     values = last7Days.map { it.pickups / maxPickups.toFloat() },
                     barColor = palette.bar,
                     selectedColor = palette.barSelected,
                     gridColor = palette.chartGrid,
-                    selectedIndex = last7Days.lastIndex
+                    selectedIndex = selectedIndex,
+                    averageFraction = (averagePickups / maxPickups).toFloat(),
+                    averageColor = palette.muted,
+                    onSelect = { selectedIndex = it }
                 )
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
-                    last7Days.forEach { day ->
+                // One weight-1 slot per day, matching the chart's own slots, so each
+                // letter sits exactly under its bar.
+                Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                    last7Days.forEachIndexed { index, day ->
                         Text(
                             TimeFormat.weekdayInitial(day.date),
                             style = MaterialTheme.typography.bodySmall,
-                            color = palette.muted
+                            color = if (index == selectedIndex) palette.ink else palette.muted,
+                            fontWeight = if (index == selectedIndex) FontWeight.Bold else FontWeight.Normal,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }
+                Spacer(Modifier.height(10.dp))
+                AverageLegend(averagePickups, palette.muted)
             }
         }
 
